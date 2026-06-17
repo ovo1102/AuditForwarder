@@ -1,0 +1,44 @@
+﻿# Build artifacts
+build/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+*.lib
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+Makefile
+*.cmake
+install_manifest.txt
+CPackConfig.cmake
+CPackSourceConfig.cmake
+
+# Logs
+*.log
+*.out
+
+# Data directories
+data/
+var/
+
+# Windows
+*.pdb
+*.ilk
+*.exp
+*.suo
+*.user
+.vscode/
+.vs/
+
+# Dependencies
+.vcpkg/
+msys64/
+
+# Environment
+.env
+.DS_Store
+Thumbs.db

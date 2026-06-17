@@ -1,0 +1,18 @@
+# Test configuration
+agent:
+  id: "test-agent"
+  data_dir: "./data"
+
+log:
+  level: debug
+  file: "./agent.log"
+
+collectors:
+  process:
+    enabled: true
+
+manager:
+  enabled: false
+
+self_protect:
+  enabled: false

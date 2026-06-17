@@ -1,0 +1,125 @@
+# AuditForwarder - Default detection rules.
+# Each rule is evaluated against every event.  When a match occurs:
+#   * event.severity is set to the rule's severity
+#   * event.rule_id is set to the rule's id
+#   * the listed responses are dispatched
+#   * if 'block' or 'kill' is among responses, the event is dropped from the
+#     normal forwarding pipeline (an 'alert' event is still emitted)
+
+rules:
+  # ---- Filesystem ----------------------------------------------------------
+  - id: R-FS-001
+    name: Read of /etc/shadow
+    description: Direct read of the password-hash database
+    severity: warning
+    enabled: true
+    categories: [file]
+    actions: [read]
+    path_match:
+      - /etc/shadow
+    responses: [alert]
+
+  - id: R-FS-002
+    name: Sensitive system file modified
+    description: Modification of sudoers or PAM configs
+    severity: critical
+    enabled: true
+    categories: [file]
+    actions: [write, rename, chmod]
+    path_match:
+      - /etc/sudoers
+      - /etc/sudoers.d/.*
+      - /etc/pam\\.d/.*
+    responses: [alert, block]
+
+  # ---- Process ------------------------------------------------------------
+  - id: R-PROC-001
+    name: Unusual parent process
+    description: A shell is spawned by a non-shell process (possible injection)
+    severity: warning
+    enabled: true
+    categories: [process]
+    actions: [spawn]
+    actor_match:
+      - "^(?!.*(bash|sh|zsh|dash|fish)).*$"
+    match:
+      actor.name: "bash"
+    threshold: 1
+    window_sec: 60
+    responses: [alert]
+
+  # ---- Network ------------------------------------------------------------
+  - id: R-NET-001
+    name: Connection to suspicious TLD
+    severity: warning
+    enabled: true
+    categories: [network]
+    actions: [connect]
+    path_match:
+      - .*\\.(ru|cn|tk|xyz|top)$"
+    responses: [alert]
+
+  - id: R-NET-002
+    name: Outbound on unusual port
+    severity: warning
+    enabled: true
+    categories: [network]
+    actions: [connect]
+    match:
+      target.port: "4444"
+    responses: [alert]
+
+  # ---- Command ------------------------------------------------------------
+  - id: R-CMD-001
+    name: Potential reverse shell
+    severity: critical
+    enabled: true
+    categories: [command]
+    cmd_match:
+      - "bash\\s+-i.*>&?\\s*/dev/tcp/"
+      - "nc\\s+-e\\s+/bin/(ba)?sh"
+      - "python.*-c.*socket\\.socket"
+      - "socat.*exec.*bash"
+    responses: [alert, kill]
+
+  - id: R-CMD-002
+    name: Privilege escalation via sudo
+    severity: warning
+    enabled: true
+    categories: [command]
+    cmd_match:
+      - "^sudo\\s+su"
+      - "^sudo\\s+bash"
+    responses: [alert]
+
+  # ---- Auth ---------------------------------------------------------------
+  - id: R-AUTH-001
+    name: Multiple failed logins
+    severity: warning
+    enabled: true
+    categories: [auth]
+    actions: [auth_fail]
+    threshold: 5
+    window_sec: 60
+    responses: [alert]
+
+  # ---- Driver load --------------------------------------------------------
+  - id: R-DRV-001
+    name: Unsigned driver loaded
+    severity: critical
+    enabled: true
+    categories: [driver]
+    actions: [load]
+    match:
+      attrs.signed: "false"
+    responses: [alert, block]
+
+  # ---- Behavior -----------------------------------------------------------
+  - id: R-BEH-001
+    name: Behavior anomaly
+    description: Triggered when the runtime baseline detects an unusual pattern
+    severity: notice
+    enabled: true
+    match:
+      attrs.behavior_anomaly: "true"
+    responses: [alert]

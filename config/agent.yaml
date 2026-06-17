@@ -1,0 +1,151 @@
+# AuditForwarder - Master configuration
+# This is a YAML file. Comments begin with '#'. Keys are dotted-paths in the API.
+
+# ---------------------------------------------------------------------------
+# Global agent settings
+# ---------------------------------------------------------------------------
+agent:
+  # Unique identifier for this installation. Auto-generated from hostname+pid
+  # if not provided.
+  id: ""
+
+  # Directory for runtime data (chains, resume index, etc.)
+  data_dir: /var/lib/auditforwarder
+
+  # Path to the main configuration file
+  config_path: /etc/auditforwarder/agent.yaml
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+log:
+  level: info            # debug | info | notice | warning | error | critical
+  file: /var/log/auditforwarder/agent.log
+  max_bytes: 52428800    # 50 MiB rotation threshold
+  max_backups: 5
+  include_pid: true
+  include_tid: true
+
+# ---------------------------------------------------------------------------
+# Chain of custody
+# ---------------------------------------------------------------------------
+chain:
+  batch_size: 256                 # events per signed batch
+  sign_batches: true
+  auto_persist: true
+  # Either provide a signing key (PEM), an HMAC key, or rely on the per-host
+  # default.  Both signing modes produce tamper-evident Merkle trees.
+  signing_key_path: /etc/auditforwarder/keys/agent.pem
+  hmac_key: ""
+
+# ---------------------------------------------------------------------------
+# Transport (uploader)
+# ---------------------------------------------------------------------------
+transport:
+  # Comma-separated list of server URLs.  The first reachable one wins.
+  servers:
+    - https://audit.example.com/api/v1/ingest
+    - https://audit-dr.example.com/api/v1/ingest
+
+  # realtime: forward batches as soon as they are ready
+  # batch:    forward on a fixed schedule
+  mode: realtime
+
+  interval_sec: 30
+  max_backoff_sec: 600
+  compress: true
+  encrypt_payload: true
+
+  # Mutual TLS
+  client_cert: /etc/auditforwarder/tls/client.crt
+  client_key:  /etc/auditforwarder/tls/client.key
+  ca_cert:     /etc/auditforwarder/tls/ca.crt
+  verify_tls: true
+
+  # Bearer token (used only if mutual TLS is not configured)
+  auth_token: ""
+
+  request_timeout_sec: 30
+
+# ---------------------------------------------------------------------------
+# Detection
+# ---------------------------------------------------------------------------
+detector:
+  rules_path: /etc/auditforwarder/rules.yaml
+  enable_behavior_baseline: true
+
+# ---------------------------------------------------------------------------
+# Self protection
+# ---------------------------------------------------------------------------
+self_protect:
+  enabled: true
+  install_path: /usr/local/bin/auditforwarderd
+  known_good_hash: ""          # SHA-256 of the binary
+  check_interval_sec: 5
+  lock_install_dir: true
+  watchdog: true
+
+# ---------------------------------------------------------------------------
+# Manager (admin HTTP interface)
+# ---------------------------------------------------------------------------
+manager:
+  enabled: true
+  listen: 127.0.0.1:8443
+  auth_token: ""               # required for non-loopback binds
+  tls_cert: ""
+  tls_key: ""
+
+# ---------------------------------------------------------------------------
+# Collectors
+# ---------------------------------------------------------------------------
+collectors:
+  file:
+    enabled: true
+    paths:
+      - /etc
+      - /var/log
+      - /tmp
+      - /root
+      - /home
+    exclude:
+      - "/proc/*"
+      - "/sys/*"
+      - "*.tmp"
+      - "*.swp"
+
+  process:
+    enabled: true
+    poll_ms: 500
+    watch_shell_only: false
+
+  network:
+    enabled: true
+    poll_sec: 2
+    listen_only: false
+
+  command:
+    enabled: true
+    tracked_shells:
+      - bash
+      - sh
+      - zsh
+      - python
+      - python3
+      - perl
+      - ruby
+      - node
+
+  audit:
+    enabled: true              # requires libaudit + CAP_AUDIT_READ
+    subsystems: [syscall, execve, path, user_auth]
+
+# ---------------------------------------------------------------------------
+# Processors
+# ---------------------------------------------------------------------------
+processors:
+  - type: enricher
+  - type: pii_masker
+  - type: deduper
+    window_ms: 50
+  - type: sampler
+    keep_ratio: 1.0
