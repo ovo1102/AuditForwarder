@@ -93,7 +93,7 @@ Logger::~Logger() {
 void Logger::configure(const LogConfig& cfg) {
     std::lock_guard<std::mutex> lk(mtx_);
     cfg_ = cfg;
-    if ((static_cast<LogTarget>(cfg_.targets) & LogTarget::File) != LogTarget::Console && !cfg_.file_path.empty()) {
+    if ((cfg_.targets & static_cast<u8>(LogTarget::File)) != 0 && !cfg_.file_path.empty()) {
         file_stream_.open(cfg_.file_path, std::ios::app | std::ios::binary);
         if (!file_stream_.is_open()) {
             std::fprintf(stderr, "logger: failed to open log file: %s\n",
@@ -182,13 +182,14 @@ void Logger::write_to_file(const std::string& line) {
     rotate_if_needed_locked(line.size());
     if (file_stream_.is_open()) {
         file_stream_.write(line.data(), static_cast<std::streamsize>(line.size()));
+        file_stream_.flush();
     }
 }
 
 void Logger::write_to_syslog(const std::string& line, Severity sev) {
 #ifdef AF_PLATFORM_UNIX
     if (syslog_fd_ < 0) return;
-    // syslog adds timestamp; strip the leading ISO timestamp to avoid duplication
+    // syslog 会自动添加时间戳，去除前导 ISO 时间戳以避免重复
     auto p = line.find(' ');
     std::string body = (p != std::string::npos) ? line.substr(p + 1) : line;
     while (!body.empty() && (body.back() == '\n' || body.back() == '\r')) body.pop_back();

@@ -28,7 +28,7 @@
 
 namespace af {
 
-// Global agent pointer for signal handling
+// 全局代理指针，用于信号处理
 namespace {
 Agent* g_agent = nullptr;
 void on_signal(int sig) {
@@ -43,7 +43,7 @@ Agent::~Agent() { stop(); }
 Result<void> Agent::init(const AgentConfig& cfg) {
     cfg_ = cfg;
 
-    // Configure logger
+    // 配置日志器
     LogConfig lcfg;
     lcfg.level       = cfg_.log_level;
     lcfg.file_path   = cfg_.log_file;
@@ -57,7 +57,7 @@ Result<void> Agent::init(const AgentConfig& cfg) {
 #endif
     Logger::instance().configure(lcfg);
 
-    // Ensure data directory exists
+    // 确保数据目录存在
     if (!cfg_.data_dir.empty()) {
         auto r = fs::create_directories(cfg_.data_dir);
         if (r.is_err()) return r;
@@ -69,7 +69,7 @@ Result<void> Agent::init(const AgentConfig& cfg) {
         if (r.is_err()) AF_LOG_WARN("config: load failed: " << r.error().message());
     }
 
-    // Initialize chain
+    // 初始化链
     chain::ChainConfig cc;
     cc.data_dir      = cfg_.data_dir;
     cc.batch_size    = cfg_.chain_batch_size;
@@ -87,12 +87,12 @@ Result<void> Agent::init(const AgentConfig& cfg) {
         if (transport_) transport_->send_batch(b);
     });
 
-    // Build default processor chain
+    // 构建默认处理器链
     processors_.emplace_back(std::make_unique<processor::Enricher>(proc::hostname(), cfg_.agent_id));
     processors_.emplace_back(std::make_unique<processor::PIIMasker>());
     processors_.emplace_back(std::make_unique<processor::Deduper>());
 
-    // Detector
+    // 检测器
     auto det = std::make_unique<detector::RuleEngine>();
     if (!cfg_.rules_path.empty() && fs::exists(cfg_.rules_path)) {
         auto r = det->load_rules(cfg_.rules_path);
@@ -130,7 +130,7 @@ Result<void> Agent::init(const AgentConfig& cfg) {
     }
     detector_ = std::move(det);
 
-    // Transport
+    // 传输模块
     TransportConfig tc;
     tc.server_urls     = cfg_.server_urls;
     tc.mode            = cfg_.transport_mode;
@@ -175,7 +175,7 @@ Result<void> Agent::start() {
     if (running_.exchange(true)) return Result<void>::ok();
     start_tp_ = Clock::now();
 
-    // Build platform-specific collectors
+    // 构建平台特定的采集器
     std::vector<std::unique_ptr<Collector>> created;
     if (collectors_.empty()) {
 #ifdef AF_PLATFORM_LINUX
@@ -228,7 +228,7 @@ void Agent::submit(AuditEvent& ev) {
     if (ev.actor.pid == 0)   ev.actor.pid = proc::current_pid();
     if (ev.actor.user.empty()) ev.actor.user = proc::current_username();
 
-    // Run processor pipeline
+    // 运行处理器管道
     for (auto& p : processors_) {
         if (!p->process(ev)) {
             std::lock_guard<std::mutex> lk(stats_mtx_);
@@ -237,7 +237,7 @@ void Agent::submit(AuditEvent& ev) {
         }
     }
 
-    // Detection
+    // 检测
     if (detector_ && !detector_->inspect(ev)) {
         std::lock_guard<std::mutex> lk(stats_mtx_);
         stats_.events_dropped++;
@@ -248,16 +248,16 @@ void Agent::submit(AuditEvent& ev) {
         stats_.alerts++;
     }
 
-    // Add to chain
+    // 添加到链
     if (chain_) chain_->submit(ev);
     {
         std::lock_guard<std::mutex> lk(stats_mtx_);
         stats_.events_collected++;
     }
 
-    // Forward to transport
+    // 转发到传输模块
     if (transport_ && !cfg_.server_urls.empty()) {
-        // batched forwarding is done by chain.flush() consumer
+        // 批量转发由 chain.flush() 消费者完成
     }
 }
 

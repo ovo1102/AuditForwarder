@@ -87,7 +87,7 @@ Result<ConfigValue> parse_json_string(JsonCursor& c) {
     }
     if (c.i >= c.s.size())
         return Result<ConfigValue>(Error(Error::Code::Parse, "unterminated string"));
-    ++c.i; // consume closing "
+    ++c.i; // 消费闭合的引号
     return ConfigValue(std::move(out));
 }
 
@@ -249,7 +249,7 @@ Result<ConfigValue> parse_yaml_map(const std::vector<YamlLine>& lines, std::size
             return Result<ConfigValue>(Error(Error::Code::Parse, "expected key: " + content));
 
         std::string key = content.substr(0, colon);
-        // trim key
+        // 去除键尾部空白
         while (!key.empty() && (key.back() == ' ' || key.back() == '\t')) key.pop_back();
         std::string rest;
         if (colon + 1 < content.size()) {
@@ -270,7 +270,7 @@ Result<ConfigValue> parse_yaml_map(const std::vector<YamlLine>& lines, std::size
                         auto sub = lines[saved].content.substr(2);
                         while (!sub.empty() && (sub.front() == ' ' || sub.front() == '\t')) sub.erase(0, 1);
                         if (sub.empty()) {
-                            // Sub-block at base_indent + 4
+                            // base_indent + 4 处的子块
                             if (idx < lines.size() && lines[idx].indent > base_indent + 2) {
                                 auto inner = parse_yaml_block(lines, idx, lines[idx].indent);
                                 if (inner.is_err()) return inner;
@@ -316,7 +316,7 @@ Result<ConfigValue> parse_yaml_map(const std::vector<YamlLine>& lines, std::size
 }
 
 Result<ConfigValue> parse_yaml_block(const std::vector<YamlLine>& lines, std::size_t& idx, int base_indent) {
-    // Decide whether this is a list or a map
+    // 判断是列表还是映射
     if (idx < lines.size() && is_list_item(lines[idx].content) && lines[idx].indent == base_indent) {
         std::vector<ConfigValue> arr;
         while (idx < lines.size() && lines[idx].indent == base_indent && is_list_item(lines[idx].content)) {

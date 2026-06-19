@@ -1,5 +1,5 @@
 #pragma once
-// AuditForwarder - Audit event model and processing pipeline.
+// AuditForwarder - 审计事件模型和处理管道。
 
 #include "auditforwarder/types.h"
 #include <map>
@@ -9,28 +9,28 @@
 
 namespace af {
 
-// ---- Event category (top-level classification) ----
+// ---- 事件类别（顶层分类）----
 enum class EventCategory : u8 {
-    System      = 0,  // boot/shutdown, kernel events
-    Process     = 1,  // exec, fork, exit
-    File        = 2,  // create/read/write/delete/rename/chmod
-    Network     = 3,  // connect, listen, send, recv
-    Registry    = 4,  // Windows registry
-    Command     = 5,  // shell command line
-    Gui         = 6,  // GUI interactions (window focus, clipboard)
-    Auth        = 7,  // login, logout, sudo, UAC
-    Privilege   = 8,  // privilege changes
-    Driver      = 9,  // kernel driver load/unload
-    Syscall     = 10, // low-level syscall tracing
-    Config      = 11, // agent config changes
-    Update      = 12, // agent upgrade
+    System      = 0,  // 启动/关闭，内核事件
+    Process     = 1,  // 执行、fork、退出
+    File        = 2,  // 创建/读/写/删除/重命名/修改权限
+    Network     = 3,  // 连接、监听、发送、接收
+    Registry    = 4,  // Windows 注册表
+    Command     = 5,  // Shell 命令行
+    Gui         = 6,  // GUI 交互（窗口焦点、剪贴板）
+    Auth        = 7,  // 登录、注销、sudo、UAC
+    Privilege   = 8,  // 权限变更
+    Driver      = 9,  // 内核驱动加载/卸载
+    Syscall     = 10, // 低级系统调用追踪
+    Config      = 11, // 代理配置变更
+    Update      = 12, // 代理升级
     Other       = 255,
 };
 
 const char* to_string(EventCategory c) noexcept;
 EventCategory category_from_string(const std::string& s) noexcept;
 
-// ---- Action performed (verb) ----
+// ---- 执行的动作（动词）----
 enum class EventAction : u16 {
     Unknown       = 0,
     Create        = 1,
@@ -51,17 +51,17 @@ enum class EventAction : u16 {
     Logout        = 21,
     AuthFail      = 22,
     PrivilegeEsc  = 23,
-    KeyEvent      = 30,  // keyboard event (privacy filtered)
+    KeyEvent      = 30,  // 键盘事件（隐私过滤）
     MouseEvent    = 31,
     WindowFocus   = 32,
     Clipboard     = 33,
     Screenshot    = 34,
-    Set           = 40,  // registry / config set
-    Get           = 41,  // registry / config get
-    Load          = 50,  // driver / module load
+    Set           = 40,  // 注册表 / 配置设置
+    Get           = 41,  // 注册表 / 配置获取
+    Load          = 50,  // 驱动 / 模块加载
     Unload        = 51,
-    Alert         = 100, // detection alert
-    Block         = 101, // policy block
+    Alert         = 100, // 检测告警
+    Block         = 101, // 策略阻止
     Quarantine    = 102,
     Kill          = 103,
     Annotate      = 200,
@@ -72,7 +72,7 @@ enum class EventAction : u16 {
 const char* to_string(EventAction a) noexcept;
 EventAction action_from_string(const std::string& s) noexcept;
 
-// ---- Outcome ----
+// ---- 结果 ----
 enum class EventOutcome : u8 {
     Unknown = 0,
     Success = 1,
@@ -82,7 +82,7 @@ enum class EventOutcome : u8 {
 
 const char* to_string(EventOutcome o) noexcept;
 
-// ---- Actor (who did it) ----
+// ---- 操作者（谁执行了操作）----
 struct Actor {
     u32         pid     { 0 };
     u32         tid     { 0 };
@@ -90,24 +90,24 @@ struct Actor {
     std::string path;
     std::string user;
     std::string sid;     // Windows SID / Linux uid:gid
-    std::string session; // session id
-    std::string remote;  // remote address if remote actor
+    std::string session; // 会话 ID
+    std::string remote;  // 远程操作者的地址
 };
 
-// ---- Target (what was affected) ----
+// ---- 目标（受影响的对象）----
 struct Target {
-    std::string kind;     // file, registry-key, socket, process...
-    std::string path;     // file path or key
-    std::string address;  // network address
+    std::string kind;     // 文件、注册表键、套接字、进程...
+    std::string path;     // 文件路径或键
+    std::string address;  // 网络地址
     u16         port      { 0 };
     std::string protocol; // tcp/udp/icmp...
 };
 
-// ---- Single audit event ----
+// ---- 单个审计事件 ----
 struct AuditEvent {
-    u64                 id            { 0 }; // assigned globally
-    u64                 seq           { 0 }; // monotonic seq
-    SysTime             timestamp     {};   // wall clock
+    u64                 id            { 0 }; // 全局分配
+    u64                 seq           { 0 }; // 单调序列号
+    SysTime             timestamp     {};   // 墙钟时间
     u64                 ts_micros     { 0 };
     EventCategory       category      { EventCategory::Other };
     EventAction         action        { EventAction::Unknown };
@@ -115,17 +115,17 @@ struct AuditEvent {
     Severity            severity      { Severity::Info };
     std::string         host;
     std::string         agent_id;
-    std::string         rule_id;      // detection rule id
+    std::string         rule_id;      // 检测规则 ID
     Actor               actor;
     Target              target;
-    std::string         command;      // executed command line
-    std::string         message;      // human readable
-    std::map<std::string, std::string> attrs;  // additional attributes
-    ByteBuffer          raw_payload;  // optional raw evidence (encrypted)
-    std::string         hash;         // computed after normalization
-    std::string         prev_hash;    // chain link
-    std::string         signature;    // signed payload
-    std::string         batch_id;     // batch this event belongs to
+    std::string         command;      // 执行的命令行
+    std::string         message;      // 人类可读描述
+    std::map<std::string, std::string> attrs;  // 附加属性
+    ByteBuffer          raw_payload;  // 可选原始证据（加密）
+    std::string         hash;         // 规范化后计算
+    std::string         prev_hash;    // 链链接
+    std::string         signature;    // 签名载荷
+    std::string         batch_id;     // 事件所属批次
     u32                 schema_ver    { 1 };
 
     std::string to_json() const;
@@ -133,7 +133,7 @@ struct AuditEvent {
     void compute_hash();
 };
 
-// ---- Event sink interface ----
+// ---- 事件接收接口 ----
 class EventSink {
 public:
     virtual ~EventSink() = default;
@@ -144,7 +144,7 @@ public:
 
 using EventSinkPtr = std::shared_ptr<EventSink>;
 
-// ---- Batched event container ----
+// ---- 批量事件容器 ----
 struct EventBatch {
     std::string         id;
     SysTime             created_at;

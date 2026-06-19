@@ -28,7 +28,7 @@ bool BehaviorTracker::is_anomalous(const BehaviorKey& k, u64 ts_unix, double sig
     auto it = samples_.find(k);
     if (it == samples_.end() || it->second.size() < 30) return false;
     auto& v = it->second;
-    // compute inter-arrival intervals
+    // 计算到达间隔
     std::vector<double> iv;
     iv.reserve(v.size() - 1);
     for (std::size_t i = 1; i < v.size(); ++i)
@@ -81,7 +81,7 @@ void ResponseDispatcher::dispatch(const std::vector<std::string>& responses, con
 }
 
 // ===========================================================================
-// RuleEngine
+// RuleEngine（规则引擎）
 // ===========================================================================
 RuleEngine::RuleEngine()  = default;
 RuleEngine::~RuleEngine() { delete responder_; }
@@ -158,7 +158,7 @@ bool RuleEngine::inspect(AuditEvent& ev) {
         }
         if (!exact) continue;
 
-        // Threshold / window tracking
+        // 阈值/窗口跟踪
         if (r.threshold > 1) {
             std::lock_guard<std::mutex> lk(mtx_);
             auto& h = hits_[r.id];
@@ -167,7 +167,7 @@ bool RuleEngine::inspect(AuditEvent& ev) {
             if (static_cast<int>(h.size()) < r.threshold) continue;
         }
 
-        // Match!  Promote severity, set rule_id, dispatch responses.
+        // 匹配！提升严重性，设置 rule_id，分发响应。
         ev.severity = r.severity;
         ev.rule_id  = r.id;
         if (!r.responses.empty() && responder_) {
@@ -180,7 +180,7 @@ bool RuleEngine::inspect(AuditEvent& ev) {
         }
     }
 
-    // Update behavior baseline
+    // 更新行为基线
     BehaviorKey bk{ ev.actor.name, ev.target.path, ev.command };
     behavior().observe(bk, now_unix);
     if (behavior().is_anomalous(bk, now_unix)) {

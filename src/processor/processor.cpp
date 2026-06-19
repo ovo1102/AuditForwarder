@@ -70,7 +70,7 @@ bool Sampler::process(AuditEvent&) {
 }
 
 // =====================================================================
-// Deduper
+// Deduper（去重器）
 // =====================================================================
 Deduper::Deduper(std::chrono::milliseconds window) : window_(window) {}
 
@@ -130,7 +130,7 @@ bool Aggregator::process(AuditEvent& ev) {
     auto now = Clock::now();
     if (it == buckets_.end() || (now - it->second.first) > window_) {
         if (it != buckets_.end() && !it->second.events.empty()) {
-            // Emit a summary now
+            // 立即发出摘要
             AuditEvent sum = it->second.events.front();
             sum.message = "[aggregated " + std::to_string(it->second.events.size()) + " events] " + sum.message;
             sum.attrs["aggregated_count"] = std::to_string(it->second.events.size());

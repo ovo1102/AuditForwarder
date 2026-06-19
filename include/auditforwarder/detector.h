@@ -1,6 +1,6 @@
 #pragma once
-// AuditForwarder - Detection engine: rule-based + behavior-based detection
-// with automatic response actions.
+// AuditForwarder - 检测引擎：基于规则 + 基于行为的检测
+// 并自动执行响应动作。
 
 #include "auditforwarder/event.h"
 #include "auditforwarder/agent.h"
@@ -14,25 +14,25 @@
 
 namespace af::detector {
 
-// ---- Rule definition (YAML/JSON loadable) ----
+// ---- 规则定义（可通过 YAML/JSON 加载）----
 struct Rule {
     std::string id;
     std::string name;
     std::string description;
     Severity    severity { Severity::Warning };
     bool        enabled  { true };
-    std::vector<std::string> categories;     // match any
-    std::vector<std::string> actions;        // match any
-    std::map<std::string, std::string> match; // exact field match
-    std::vector<std::string> actor_match;    // regex on actor.name/path
-    std::vector<std::string> path_match;     // regex on target.path
-    std::vector<std::string> cmd_match;      // regex on command
-    int         threshold { 1 };             // occurrences within window
+    std::vector<std::string> categories;     // 匹配任意
+    std::vector<std::string> actions;        // 匹配任意
+    std::map<std::string, std::string> match; // 精确字段匹配
+    std::vector<std::string> actor_match;    // actor.name/path 正则匹配
+    std::vector<std::string> path_match;     // target.path 正则匹配
+    std::vector<std::string> cmd_match;      // command 正则匹配
+    int         threshold { 1 };             // 时间窗口内的出现次数
     std::chrono::seconds window { 10 };
     std::vector<std::string> responses;      // alert, block, kill, quarantine
 };
 
-// ---- Behavior baseline (simple moving average / frequency) ----
+// ---- 行为基线（简单移动平均 / 频率）----
 struct BehaviorKey {
     std::string actor;
     std::string path;
@@ -62,7 +62,7 @@ private:
     mutable std::mutex mtx_;
 };
 
-// ---- Auto response actions ----
+// ---- 自动响应动作 ----
 class ResponseDispatcher {
 public:
     ResponseDispatcher(class Agent* agent, std::function<void(const AuditEvent&)> alert_cb);
@@ -82,14 +82,14 @@ public:
     bool         inspect(AuditEvent& ev) override;
     std::string  name() const override { return "rule_engine"; }
 
-    // Load rules from a file (JSON or YAML)
+    // 从文件加载规则（JSON 或 YAML）
     Result<void> load_rules(const std::string& path);
     Result<void> add_rule(const Rule& r);
     void clear_rules();
     std::size_t rule_count() const;
     const std::vector<Rule>& rules() const { return rules_; }
 
-    // Behavior tracker
+    // 行为追踪器
     BehaviorTracker& behavior() { return behavior_; }
 
 private:

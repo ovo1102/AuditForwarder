@@ -1,5 +1,5 @@
 #pragma once
-// AuditForwarder - Configuration loader (YAML with JSON fallback).
+// AuditForwarder - 配置加载器 (YAML，JSON 作为备选)。
 
 #include "auditforwarder/types.h"
 #include <map>
@@ -11,12 +11,12 @@ namespace af {
 
 class ConfigValue;
 
-// Parser functions exposed for the implementation translation units.
+// 为实现翻译单元暴露的解析函数。
 Result<void> parse_minimal_json(const std::string& content, ConfigValue& out);
 Result<void> parse_minimal_yaml(const std::string& content, ConfigValue& out);
 Result<void> parse_minimal(const std::string& content, const std::string& format, ConfigValue& out);
 
-// Lightweight dynamic value to avoid hard dependency on yaml-cpp/nlohmann_json.
+// 轻量级动态值，避免对 yaml-cpp/nlohmann_json 的硬依赖。
 class ConfigValue {
 public:
     enum class Type { Null, Bool, Int, Double, String, List, Map };
@@ -53,10 +53,10 @@ public:
     const ConfigValue& at_index(std::size_t i) const;
     std::size_t        size() const;
 
-    // Set a nested key using dotted path "a.b.c". Creates maps as needed.
+    // 使用点分隔路径 "a.b.c" 设置嵌套键。按需创建映射。
     void set_path(const std::string& path, const ConfigValue& v);
 
-    // Merge another map into this one (other overrides).
+    // 将另一个映射合并到当前映射（其他映射覆盖当前）。
     void merge(const ConfigValue& other);
 
     std::string dump_json() const;
@@ -78,7 +78,7 @@ public:
     const ConfigValue& root() const { return root_; }
     ConfigValue&       root()       { return root_; }
 
-    // Convenience getters with dotted paths
+    // 使用点分隔路径的便捷获取方法
     bool        get_bool(const std::string& path, bool def = false) const;
     long long   get_int(const std::string& path, long long def = 0) const;
     double      get_double(const std::string& path, double def = 0.0) const;

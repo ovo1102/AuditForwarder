@@ -115,7 +115,7 @@ std::string absolute(const std::string& path) {
 #else
     char buf[PATH_MAX];
     if (realpath(path.c_str(), buf)) return std::string(buf);
-    // Fall back to manual resolution
+    // 回退到手动解析
     if (!path.empty() && path[0] == '/') return normalize(path);
     char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof(cwd))) return normalize(std::string(cwd) + "/" + path);
@@ -154,7 +154,7 @@ bool is_regular(const std::string& path) {
 bool is_symlink(const std::string& path) noexcept {
 #ifdef AF_PLATFORM_WINDOWS
     (void)path;
-    return false; // Windows symlinks handled differently
+    return false; // Windows 符号链接处理方式不同
 #else
     struct stat st;
     if (::lstat(path.c_str(), &st) != 0) return false;

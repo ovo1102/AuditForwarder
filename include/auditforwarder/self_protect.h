@@ -1,5 +1,5 @@
 #pragma once
-// AuditForwarder - Self protection: integrity checks, watchdog, anti-tamper.
+// AuditForwarder - 自我保护：完整性检查、看门狗、防篡改。
 
 #include "auditforwarder/agent.h"
 #include <atomic>
@@ -11,11 +11,11 @@
 namespace af {
 
 struct SelfProtectConfig {
-    std::string install_path;        // path of the agent binary
+    std::string install_path;        // 代理二进制文件路径
     std::string data_dir;
     std::string config_path;
-    std::string known_good_hash;     // expected SHA-256 of the binary
-    std::string policy_path;         // file containing critical process paths
+    std::string known_good_hash;     // 二进制文件的预期 SHA-256
+    std::string policy_path;         // 包含关键进程路径的文件
     std::vector<std::string> watch_processes;
     int         check_interval_sec { 5 };
     bool        lock_files          { true };

@@ -1,6 +1,6 @@
 #pragma once
-// AuditForwarder - Chain of custody: links events in hash chain, batches into
-// Merkle trees, signs batches.
+// AuditForwarder - 证据链：将事件链接到哈希链中，批量构建
+// Merkle 树，并对批次签名。
 
 #include "auditforwarder/event.h"
 #include "auditforwarder/crypto.h"
@@ -13,19 +13,19 @@ namespace af::chain {
 
 using EventBatch = af::EventBatch;
 
-// Configuration for the chain
+// 链配置
 struct ChainConfig {
-    std::string data_dir;            // local storage of signed batches
-    std::size_t batch_size { 256 };  // events per batch
+    std::string data_dir;            // 签名批次的本地存储
+    std::size_t batch_size { 256 };  // 每批次事件数
     bool        sign_batches { true };
     bool        auto_persist { true };
 };
 
-// Callback invoked whenever a new batch has been built and persisted.
-// Useful for bridging to the transport.
+// 当新批次构建并持久化后调用的回调函数。
+// 用于桥接到传输模块。
 using BatchCallback = std::function<void(const EventBatch&)>;
 
-// Process raw events: assign id, compute hash, link prev_hash, append to batch.
+// 处理原始事件：分配 ID、计算哈希、链接 prev_hash、追加到批次。
 class Chain {
 public:
     explicit Chain(ChainConfig cfg);
@@ -34,30 +34,30 @@ public:
     void start();
     void stop();
 
-    // Set the key used for signing batches. If not set, HMAC-SHA256 is used.
+    // 设置用于签名批次的密钥。如未设置，则使用 HMAC-SHA256。
     void set_signer(crypto::KeyPair kp);
     void set_hmac_key(const std::string& key);
 
-    // Register a callback invoked after each successful batch build.
+    // 注册每次成功构建批次后调用的回调。
     void on_batch(BatchCallback cb);
 
-    // Submit a single event to be hashed and added to the current batch.
+    // 提交单个事件进行哈希计算并添加到当前批次。
     void submit(AuditEvent& ev);
 
-    // Force flush of the current batch.
+    // 强制刷新当前批次。
     Result<EventBatch> flush();
 
-    // Read back the most recent N signed batches (for audit).
+    // 读取最近 N 个已签名批次（用于审计）。
     Result<std::vector<EventBatch>> recent_batches(std::size_t n = 10) const;
 
-    // Statistics
+    // 统计信息
     u64  total_events() const   { return total_events_.load(); }
     u64  total_batches() const  { return total_batches_.load(); }
     u64  last_event_seq() const { return last_seq_.load(); }
     std::string last_batch_id() const;
     std::string last_merkle_root() const;
 
-    // Verify a batch's signature and hash chain.
+    // 验证批次的签名和哈希链。
     static bool verify_batch(const EventBatch& b, const std::string& hmac_key = {});
     static bool verify_batch_with_key(const EventBatch& b, const crypto::KeyPair& kp);
 

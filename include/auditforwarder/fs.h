@@ -1,5 +1,5 @@
 #pragma once
-// AuditForwarder - Cross-platform filesystem/path utilities.
+// AuditForwarder - 跨平台文件系统/路径工具。
 
 #include "auditforwarder/types.h"
 #include <string>

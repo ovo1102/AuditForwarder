@@ -1,5 +1,5 @@
 #pragma once
-// AuditForwarder - Common type definitions and result/error handling.
+// AuditForwarder - 公共类型定义和结果/错误处理。
 
 #include "build_config.h"
 #include <cstdint>
@@ -12,7 +12,7 @@
 
 namespace af {
 
-// ---- Basic types ----
+// ---- 基本类型 ----
 using u8  = std::uint8_t;
 using u16 = std::uint16_t;
 using u32 = std::uint32_t;
@@ -26,13 +26,13 @@ using usize = std::size_t;
 using ByteBuffer = std::vector<u8>;
 using StringList = std::vector<std::string>;
 
-// ---- Time ----
+// ---- 时间类型 ----
 using Clock     = std::chrono::steady_clock;
 using TimePoint = Clock::time_point;
 using SysClock  = std::chrono::system_clock;
 using SysTime   = SysClock::time_point;
 
-// ---- Result type (Rust-inspired) ----
+// ---- 结果类型（借鉴 Rust 设计）----
 class Error {
 public:
     enum class Code : int {
@@ -116,7 +116,7 @@ private:
     Error err_;
 };
 
-// ---- Severity / classification ----
+// ---- 严重程度 / 分类 ----
 enum class Severity : u8 {
     Debug    = 0,
     Info     = 1,

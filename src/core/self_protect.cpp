@@ -43,20 +43,20 @@ void DefaultSelfProtect::ensure_install_dir_protected() {
     if (cfg_.install_path.empty() || !cfg_.lock_files) return;
 #ifdef AF_PLATFORM_UNIX
     auto dir = af::fs::dirname(cfg_.install_path);
-    // Drop a write-protection mode (0555) for the install directory
+    // 为安装目录设置写保护模式（0555）
     ::chmod(dir.c_str(), S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 #endif
 #ifdef AF_PLATFORM_WINDOWS
-    // On Windows, take ownership of the install directory and deny write
-    // access to non-admins via DACL. This is best-effort.
+    // 在 Windows 上，获取安装目录的所有权，并通过 DACL 拒绝非管理员的写访问权限。
+    // 这是尽力而为的操作。
     auto dir = af::fs::dirname(cfg_.install_path);
     PSECURITY_DESCRIPTOR pSD = nullptr;
     PACL pDacl = nullptr;
     if (::GetNamedSecurityInfoA(const_cast<char*>(dir.c_str()), SE_FILE_OBJECT,
                                 DACL_SECURITY_INFORMATION, nullptr, nullptr,
                                 &pDacl, nullptr, &pSD) == ERROR_SUCCESS) {
-        // Note: simplifying — production code would build a new DACL that
-        // denies write to Everyone except SYSTEM and the current user.
+        // 注意：此处简化处理 — 生产代码应构建新的 DACL，
+        // 拒绝除 SYSTEM 和当前用户之外所有人的写入权限。
         if (pSD) ::LocalFree(pSD);
     }
 #endif
@@ -65,7 +65,7 @@ void DefaultSelfProtect::ensure_install_dir_protected() {
 bool DefaultSelfProtect::check_integrity() {
     if (cfg_.install_path.empty()) return true;
     std::ifstream in(cfg_.install_path, std::ios::binary);
-    if (!in) return true;  // can't check; assume ok
+    if (!in) return true;  // 无法检查；假设正常
     std::ostringstream ss; ss << in.rdbuf();
     auto hash = crypto::sha256_hex(ss.str());
     if (!cfg_.known_good_hash.empty() && hash != cfg_.known_good_hash) {
@@ -92,7 +92,7 @@ void DefaultSelfProtect::worker_loop() {
         if (!ok && cfg_.watchdog) {
             reexec_if_needed();
         }
-        // Sleep, but wake on stop
+        // 休眠，但在停止时唤醒
         for (int i = 0; i < cfg_.check_interval_sec * 10 && running_.load(); ++i) {
             std::this_thread::sleep_for(milliseconds(100));
         }

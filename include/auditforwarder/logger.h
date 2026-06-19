@@ -1,5 +1,5 @@
 #pragma once
-// AuditForwarder - Cross-platform thread-safe logger.
+// AuditForwarder - 跨平台线程安全日志器。
 
 #include "auditforwarder/types.h"
 #include <atomic>
@@ -30,7 +30,7 @@ inline LogTarget operator&(LogTarget a, LogTarget b) {
 struct LogConfig {
     Severity    level       { Severity::Info };
     std::string file_path   {};
-    std::size_t  max_bytes  { 50 * 1024 * 1024 };  // 50 MiB rotation
+    std::size_t  max_bytes  { 50 * 1024 * 1024 };  // 50 MiB 日志轮转
     int         max_backups { 5 };
     bool        async       { true };
     u8          targets     { static_cast<u8>(LogTarget::Console) };
@@ -70,7 +70,7 @@ private:
 #endif
 };
 
-// ---- Macros ----
+// ---- 日志宏 ----
 #define AF_LOG(sev, expr)                                                       \
     do {                                                                        \
         std::ostringstream _af_oss;                                             \

@@ -1,21 +1,21 @@
-// AuditForwarder - main entry point.
+// AuditForwarder - 主入口点。
 //
-// Usage:
-//   auditforwarderd [options]
+// 用法:
+//   auditforwarderd [选项]
 //
-// Options:
-//   -c, --config <path>   Load configuration file (YAML or JSON)
-//   -d, --data <dir>      Data directory
-//   -l, --log <file>      Log file
-//   -L, --level <level>   Log level: debug|info|notice|warning|error|critical
-//       --no-manager      Disable the manager admin interface
-//       --no-selfprotect  Disable self-protection
-//       --install         Install as a system service (Linux systemd / Windows service)
-//       --uninstall       Uninstall the system service
-//       --version         Show version
-//   -h, --help            Show help
+// 选项:
+//   -c, --config <path>   加载配置文件 (YAML 或 JSON)
+//   -d, --data <dir>      数据目录
+//   -l, --log <file>      日志文件
+//   -L, --level <level>   日志级别: debug|info|notice|warning|error|critical
+//       --no-manager      禁用管理后台接口
+//       --no-selfprotect  禁用自我保护
+//       --install         安装为系统服务 (Linux systemd / Windows 服务)
+//       --uninstall       卸载系统服务
+//       --version         显示版本
+//   -h, --help            显示帮助
 //
-// All settings can also be supplied via the configuration file.
+// 所有设置也可以通过配置文件提供。
 
 #include "auditforwarder/agent.h"
 #include "auditforwarder/process.h"
@@ -39,31 +39,31 @@ namespace {
 
 void print_help() {
     std::cout <<
-R"(AuditForwarder v1.0.0 - Enterprise Security Audit Agent
+R"(AuditForwarder v1.0.0 - 企业级安全审计代理
 
-Usage:
-  auditforwarderd [options]
+用法:
+  auditforwarderd [选项]
 
-Options:
-  -c, --config <path>   Load configuration file (YAML or JSON)
-  -d, --data <dir>      Data directory (default: /var/lib/auditforwarder or
+选项:
+  -c, --config <path>   加载配置文件 (YAML 或 JSON)
+  -d, --data <dir>      数据目录 (默认: /var/lib/auditforwarder 或
                         C:\ProgramData\AuditForwarder)
-  -l, --log <file>      Log file path
-  -L, --level <level>   Log level: debug|info|notice|warning|error|critical
-      --agent-id <id>   Set the agent identifier
-      --server <url>    Server URL (can be repeated for failover)
-      --no-manager      Disable the manager admin interface
-      --no-selfprotect  Disable self-protection
-      --install         Install as a system service
-      --uninstall       Uninstall the system service
-      --version         Show version information
-  -h, --help            Show this help
+  -l, --log <file>      日志文件路径
+  -L, --level <level>   日志级别: debug|info|notice|warning|error|critical
+      --agent-id <id>   设置代理标识符
+      --server <url>    服务器 URL (可重复指定用于故障转移)
+      --no-manager      禁用管理后台接口
+      --no-selfprotect  禁用自我保护
+      --install         安装为系统服务
+      --uninstall       卸载系统服务
+      --version         显示版本信息
+  -h, --help            显示此帮助
 )";
 }
 
 std::string get_arg(int argc, char** argv, int& i, const std::string& opt) {
     if (i + 1 >= argc) {
-        std::cerr << "Missing argument for " << opt << "\n";
+        std::cerr << "选项 " << opt << " 缺少参数\n";
         std::exit(2);
     }
     return argv[++i];
@@ -98,7 +98,7 @@ int main(int argc, char** argv) {
         else if (a == "--install")             do_install = true;
         else if (a == "--uninstall")           do_uninstall = true;
         else {
-            std::cerr << "Unknown option: " << a << "\n";
+            std::cerr << "未知选项: " << a << "\n";
             print_help();
             return 2;
         }
@@ -110,18 +110,18 @@ int main(int argc, char** argv) {
     Agent agent;
     auto r = agent.init(cfg);
     if (r.is_err()) {
-        std::cerr << "init failed: " << r.error().message() << "\n";
+        std::cerr << "初始化失败: " << r.error().message() << "\n";
         return 1;
     }
     r = agent.start();
     if (r.is_err()) {
-        std::cerr << "start failed: " << r.error().message() << "\n";
+        std::cerr << "启动失败: " << r.error().message() << "\n";
         return 1;
     }
 
-    AF_LOG_INFO("auditforwarderd " << AF_VERSION_STRING << " running. Ctrl+C to stop.");
+    AF_LOG_INFO("auditforwarderd " << AF_VERSION_STRING << " 正在运行。按 Ctrl+C 停止。");
 
-    // Idle main thread
+    // 主线程空闲等待
     while (agent.is_running()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }

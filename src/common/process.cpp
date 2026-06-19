@@ -218,7 +218,7 @@ Result<std::vector<ProcessInfo>> list_processes() {
             pi.pid     = pe.th32ProcessID;
             pi.ppid    = pe.th32ParentProcessID;
             pi.name    = pe.szExeFile;
-            // exe path: query
+            // exe 路径：查询
             HANDLE h = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pe.th32ProcessID);
             if (h) {
                 char buf[MAX_PATH];

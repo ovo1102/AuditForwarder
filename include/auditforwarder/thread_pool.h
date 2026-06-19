@@ -1,5 +1,5 @@
 #pragma once
-// AuditForwarder - Fixed-size thread pool with priority queues.
+// AuditForwarder - 固定大小的线程池，支持优先级队列。
 
 #include "auditforwarder/types.h"
 #include <atomic>
@@ -23,7 +23,7 @@ public:
     void start(std::size_t threads);
     void shutdown(bool drain = true);
 
-    // Submit a task and get a future. For void-returning tasks, returns std::future<void>.
+    // 提交任务并获取 future。对于返回 void 的任务，返回 std::future<void>。
     template <typename F>
     auto submit(F&& f, Priority p = Priority::Normal)
         -> std::future<typename std::invoke_result<F>::type> {

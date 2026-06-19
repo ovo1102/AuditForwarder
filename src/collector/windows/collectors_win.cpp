@@ -188,7 +188,7 @@ private:
 };
 
 // =========================================================================
-// WindowsProcessCollector
+// WindowsProcessCollector - Windows 进程采集器
 // =========================================================================
 class WindowsProcessCollector : public Collector {
 public:
@@ -296,7 +296,7 @@ private:
 };
 
 // =========================================================================
-// WindowsCommandCollector - WMI Win32_ProcessStartTrace / WTS logs
+// WindowsCommandCollector - 基于 WMI Win32_ProcessStartTrace / WTS 日志
 // =========================================================================
 class WindowsCommandCollector : public Collector {
 public:
@@ -322,7 +322,7 @@ private:
                         if (seen_pids_.count(pe.th32ProcessID)) continue;
                         seen_pids_.insert(pe.th32ProcessID);
                         std::string name = pe.szExeFile;
-                        // Heuristic: any process that looks like a shell / scripting host
+                        // 启发式：任何看起来像 shell / 脚本宿主的进程
                         if (name.find("cmd.exe") != std::string::npos ||
                             name.find("powershell") != std::string::npos ||
                             name.find("wscript") != std::string::npos ||
@@ -418,7 +418,7 @@ class WindowsEtwCollector : public Collector {
 public:
     Result<void> start(Agent& agent) override {
         agent_ = &agent;
-        // Subscribe to Security event log
+        // 订阅安全事件日志
         EVT_HANDLE sub = ::EvtSubscribe(nullptr, nullptr, L"Security",
             L"*[System/EventID=4624 or System/EventID=4625 or System/EventID=4688 or System/EventID=4689]",
             nullptr, nullptr, nullptr, EvtSubscribeToFutureEvents);

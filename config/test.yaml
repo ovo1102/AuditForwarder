@@ -1,11 +1,11 @@
-# Test configuration
+﻿﻿# Test configuration
 agent:
   id: "test-agent"
-  data_dir: "./data"
+  data_dir: "C:\\AuditData"
 
 log:
   level: debug
-  file: "./agent.log"
+  file: "C:\\Logs\\auditforwarder.log"
 
 collectors:
   process:

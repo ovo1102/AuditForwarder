@@ -33,7 +33,7 @@
 namespace af::collector {
 
 // =========================================================================
-// Inotify-backed file watcher
+// InotifySource - 基于 inotify 的文件监控器
 // =========================================================================
 class InotifySource : public FileWatchSource {
 public:
@@ -329,7 +329,7 @@ private:
 };
 
 // =========================================================================
-// LinuxCommandCollector
+// LinuxCommandCollector - Linux 命令采集器
 // =========================================================================
 class LinuxCommandCollector : public Collector {
 public:
@@ -393,7 +393,7 @@ private:
 };
 
 // =========================================================================
-// LinuxAuditCollector
+// LinuxAuditCollector - Linux 审计采集器
 // =========================================================================
 #ifdef AF_HAVE_LIBAUDIT
 class LinuxAuditCollector : public Collector {

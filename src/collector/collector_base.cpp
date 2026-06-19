@@ -6,7 +6,7 @@
 
 namespace af::collector {
 
-// Simple glob matcher (no fnmatch dependency). Supports '*' and '?' only.
+// 简单的 glob 匹配器（无 fnmatch 依赖）。仅支持 '*' 和 '?'。
 static bool glob_match(const std::string& pat, const std::string& s) {
     std::size_t pi = 0, si = 0;
     std::size_t star_pi = std::string::npos, star_si = 0;

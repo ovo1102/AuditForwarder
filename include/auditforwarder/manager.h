@@ -1,6 +1,6 @@
 #pragma once
-// AuditForwarder - Manager server: a minimal HTTP/HTTPS admin interface for
-// status, config reload, log query, and remote upgrade.
+// AuditForwarder - 管理服务器：最小化的 HTTP/HTTPS 管理接口，
+// 用于状态查询、配置重载、日志查询和远程升级。
 
 #include "auditforwarder/agent.h"
 #include <atomic>

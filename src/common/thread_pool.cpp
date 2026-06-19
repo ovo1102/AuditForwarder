@@ -56,7 +56,7 @@ void ThreadPool::worker_loop() {
             else if (!normal_q_.empty())     { task = std::move(normal_q_.front()); normal_q_.pop_front(); }
             else                             { task = std::move(low_q_.front());    low_q_.pop_front(); }
         }
-        try { task(); } catch (...) { /* swallow to keep worker alive */ }
+        try { task(); } catch (...) { /* 吞掉异常以保持工作线程存活 */ }
     }
 }
 

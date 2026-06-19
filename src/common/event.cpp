@@ -225,7 +225,7 @@ std::string AuditEvent::to_json() const {
 }
 
 void AuditEvent::compute_hash() {
-    // Defer to crypto module; here we just produce a deterministic string.
+    // 委托给加密模块；此处仅生成确定性字符串。
     std::ostringstream o;
     o << seq << '|' << ts_micros << '|' << to_string(category) << '|'
       << to_string(action) << '|' << to_string(outcome) << '|'
@@ -238,8 +238,8 @@ void AuditEvent::compute_hash() {
 }
 
 AuditEvent AuditEvent::from_json(const std::string& /*s*/) {
-    // Full JSON deserialization is handled by the JSON transport sink
-    // when nlohmann_json is available. Without it, return empty.
+    // 完整 JSON 反序列化由 JSON 传输接收端处理，
+    // 当 nlohmann_json 可用时执行。此处返回空事件。
     return AuditEvent{};
 }
 

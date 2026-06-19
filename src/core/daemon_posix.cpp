@@ -1,4 +1,4 @@
-// AuditForwarder - POSIX service / daemon install helper.
+// AuditForwarder - POSIX 服务/守护进程安装辅助工具。
 
 #include "auditforwarder/logger.h"
 #include <cerrno>
@@ -20,7 +20,7 @@ namespace af::platform {
 int install_systemd(const std::string& data_dir, const std::string& config_path) {
     std::string unit = "/etc/systemd/system/" + std::string(AF_SYSTEMD_UNIT);
     std::string exe  = "/usr/local/bin/auditforwarderd";
-    // Discover real path of the running executable
+    // 获取正在运行的可执行文件的真实路径
     char buf[4096] = {0};
     ssize_t n = ::readlink("/proc/self/exe", buf, sizeof(buf) - 1);
     if (n > 0) { buf[n] = 0; exe = buf; }

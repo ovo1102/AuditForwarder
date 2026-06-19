@@ -137,7 +137,7 @@ void Sha256::finalize_hex(std::string& out) {
 }
 
 // ============================================================================
-// Random
+// 随机数
 // ============================================================================
 ByteBuffer random_bytes(std::size_t len) {
     ByteBuffer out(len);
@@ -230,7 +230,7 @@ Result<std::string> aes_gcm_decrypt(const std::string& key, const AeadResult& r,
 }
 
 // ============================================================================
-// KeyPair (Ed25519 / RSA)
+// KeyPair（密钥对，Ed25519 / RSA）
 // ============================================================================
 struct KeyPair::Impl {
     EVP_PKEY* pkey { nullptr };
@@ -314,7 +314,7 @@ std::string KeyPair::fingerprint() const {
     if (!impl_->pkey) return {};
     u8 buf[64]; std::size_t len = 64;
     if (EVP_PKEY_get_raw_public_key(impl_->pkey, buf, &len) == 1) return to_hex(buf, len);
-    // Fallback: write to PEM and hash
+    // 回退：写入 PEM 并哈希
     auto pem = public_pem();
     if (pem.is_ok()) return sha256_hex(pem.value());
     return {};
@@ -374,7 +374,7 @@ Result<bool> verify_with_public_pem(const std::string& pem, const ByteBuffer& ms
 }
 
 // ============================================================================
-// Merkle tree
+// Merkle 树
 // ============================================================================
 MerkleTree::MerkleTree(std::vector<ByteBuffer> leaves) : leaves_(std::move(leaves)) { build(); }
 

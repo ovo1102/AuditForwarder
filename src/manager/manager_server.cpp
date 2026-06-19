@@ -85,7 +85,7 @@ Result<void> SimpleHttpManager::start(Agent& agent) {
     addr.sin_port   = htons(static_cast<u16>(port));
     if (host.empty() || host == "0.0.0.0") addr.sin_addr.s_addr = htonl(INADDR_ANY);
     else if (::inet_pton(AF_INET, host.c_str(), &addr.sin_addr) != 1) {
-        // Try DNS
+        // 尝试 DNS
         addrinfo hints{}; hints.ai_family = AF_INET;
         addrinfo* res = nullptr;
         if (::getaddrinfo(host.c_str(), nullptr, &hints, &res) != 0 || !res) {
@@ -127,7 +127,7 @@ void SimpleHttpManager::accept_loop() {
             if (!running_.load()) return;
             continue;
         }
-        // For simplicity, handle one client per thread (no thread pool dependency here)
+        // 为简化，每个线程处理一个客户端（此处无线程池依赖）
         std::thread([this, cfd] { handle_client(cfd); ::close(cfd); }).detach();
     }
 }
@@ -142,7 +142,7 @@ void SimpleHttpManager::handle_client(int fd) {
     }
     if (req.empty()) return;
 
-    // Parse request line
+    // 解析请求行
     std::istringstream iss(req);
     std::string method, target, version;
     iss >> method >> target >> version;
@@ -152,7 +152,7 @@ void SimpleHttpManager::handle_client(int fd) {
     auto bp = req.find("\r\n\r\n");
     if (bp != std::string::npos) body = req.substr(bp + 4);
 
-    // Headers (auth check)
+    // 头部（认证检查）
     bool auth_ok = cfg_.auth_token.empty();
     {
         std::istringstream hl(req.substr(0, bp == std::string::npos ? req.size() : bp));
@@ -162,7 +162,7 @@ void SimpleHttpManager::handle_client(int fd) {
             if (!line.empty() && line.back() == '\r') line.pop_back();
             if (line.size() > 14 && line.substr(0, 14) == "Authorization:") {
                 std::string v = line.substr(15);
-                // trim
+                // 去除空格
                 while (!v.empty() && v.front() == ' ') v.erase(0, 1);
                 if (v.size() > 7 && v.substr(0, 7) == "Bearer ") v = v.substr(7);
                 if (v == cfg_.auth_token) auth_ok = true;
@@ -243,7 +243,7 @@ std::string SimpleHttpManager::route(const std::string& method, const std::strin
         return o.str();
     }
     if (path == "/upgrade" && method == "POST") {
-        // body is URL of new binary
+        // 主体为新二进制文件的 URL
         AF_LOG_INFO("manager: remote upgrade requested: " << body);
         status = 202;
         return "{\"accepted\":true}";

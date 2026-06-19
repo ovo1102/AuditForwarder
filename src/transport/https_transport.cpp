@@ -34,7 +34,7 @@ namespace af {
 
 namespace {
 
-// Zlib compression / decompression helpers
+// Zlib 压缩/解压缩辅助函数
 ByteBuffer zlib_compress(const ByteBuffer& in) {
     z_stream s{};
     deflateInit(&s, Z_DEFAULT_COMPRESSION);
@@ -222,7 +222,7 @@ void HttpsTransport::worker_loop() {
             }
         }
         if (!uploaded) {
-            // Put back into queue head with throttling
+            // 放回队列头部并进行限流
             {
                 std::lock_guard<std::mutex> lk(mtx_);
                 resume_index_[batch.id] = "failed";
@@ -281,7 +281,7 @@ UploadResult HttpsTransport::do_upload(const std::string& url, const ByteBuffer&
         }
     }
 
-    // Connect TCP
+    // 连接 TCP
     BIO* bio = BIO_new_ssl_connect(ctx);
     if (!bio) { r.error = "bio"; SSL_CTX_free(ctx); return r; }
     std::string hostport = host + ":" + std::to_string(port);
@@ -348,7 +348,7 @@ UploadResult HttpsTransport::do_upload(const std::string& url, const ByteBuffer&
     return r;
 }
 
-// Helper kept for source compatibility (no longer used)
+// 辅助函数保留以保持源码兼容性（不再使用）
 static void* ssl_via_bio(BIO* bio) { (void)bio; return nullptr; }
 
 void HttpsTransport::persist_index() {

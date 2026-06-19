@@ -265,10 +265,9 @@ std::string Config::get_string(const std::string& p, const std::string& def) con
     return cur->as_string(def);
 }
 
-// ---------------- Minimal YAML/JSON parser ----------------
+// ---------------- 简易 YAML/JSON 解析器 ----------------
 
-// Try to detect format and parse. Public so other TUs (e.g. rule_engine)
-// can use it via the header declaration.
+// 尝试检测格式并解析。公开接口，其他翻译单元（如 rule_engine）可通过头文件声明使用。
 Result<void> parse_minimal(const std::string& content, const std::string& format, ConfigValue& out) {
     auto fmt = to_lower(format);
     if (fmt.empty()) {
@@ -296,7 +295,7 @@ Result<void> Config::load_from_file(const std::string& path) {
     std::ostringstream ss; ss << in.rdbuf();
     last_path_ = path;
     
-    // Extract file extension for format detection
+    // 提取文件扩展名用于格式检测
     std::string ext;
     auto dot = path.rfind('.');
     if (dot != std::string::npos) {

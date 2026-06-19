@@ -1,4 +1,4 @@
-// AuditForwarder - Windows service install helper (sc.exe based).
+// AuditForwarder - Windows 服务安装辅助工具（基于 sc.exe）。
 
 #include "auditforwarder/logger.h"
 #include <cstdio>

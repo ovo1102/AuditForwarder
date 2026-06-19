@@ -83,7 +83,7 @@ EventBatch Chain::build_batch(std::vector<AuditEvent>&& events) {
     b.id = crypto::to_hex(crypto::sha256(std::to_string(micros) + "-" + std::to_string(events.size()))).substr(0, 16);
     b.events = std::move(events);
 
-    // Build Merkle tree
+    // 构建 Merkle 树
     std::vector<ByteBuffer> leaves;
     leaves.reserve(b.events.size());
     for (const auto& e : b.events) {
@@ -92,7 +92,7 @@ EventBatch Chain::build_batch(std::vector<AuditEvent>&& events) {
     crypto::MerkleTree tree(std::move(leaves));
     b.merkle_root = tree.root_hex();
 
-    // Sign
+    // 签名
     std::string payload = b.id + "|" + std::to_string(b.created_at.time_since_epoch().count()) + "|" + b.merkle_root;
     if (has_signer_) {
         auto sig = signer_.sign(ByteBuffer(payload.begin(), payload.end()));
@@ -157,8 +157,8 @@ Result<std::vector<EventBatch>> Chain::recent_batches(std::size_t n) const {
         std::ifstream in(files[i], std::ios::binary);
         if (!in) continue;
         std::ostringstream ss; ss << in.rdbuf();
-        // Minimal reconstruction: not parsing back into EventBatch for now,
-        // but recording metadata so remote verifier can pull the file.
+        // 最小化重建：暂时不解析回 EventBatch，
+        // 但记录元数据以便远程验证者可以拉取文件。
         EventBatch b;
         std::string content = ss.str();
         auto get_str = [&](const std::string& key) -> std::string {

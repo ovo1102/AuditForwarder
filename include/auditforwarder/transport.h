@@ -1,5 +1,5 @@
 #pragma once
-// AuditForwarder - HTTPS transport with compression, encryption, and resume.
+// AuditForwarder - HTTPS 传输模块，支持压缩、加密和断点续传。
 
 #include "auditforwarder/agent.h"
 #include "auditforwarder/event.h"
@@ -48,10 +48,10 @@ public:
     bool         is_running() const override { return running_.load(); }
     std::string  name() const override { return "https"; }
 
-    // Compress + (optionally) encrypt a batch to wire format
+    // 压缩 + （可选）加密批次为传输格式
     ByteBuffer encode_batch(const chain::EventBatch& b, const std::string& sym_key = {});
 
-    // Parse a server response to extract checkpoint info
+    // 解析服务器响应以提取检查点信息
     static std::string extract_checkpoint(const std::string& body);
 
 private:
@@ -69,7 +69,7 @@ private:
     std::vector<chain::EventBatch> queue_;
     std::map<std::string, std::string> resume_index_;  // batch_id -> last_error/url
 
-    std::string           sym_key_;   // symmetric key for payload encryption
+    std::string           sym_key_;   // 用于载荷加密的对称密钥
     std::string           checkpoint_path_;
 };
 

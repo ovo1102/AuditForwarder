@@ -1,5 +1,5 @@
 #pragma once
-// AuditForwarder - Collector base utilities (path filter, file watcher helpers).
+// AuditForwarder - 采集器基础工具（路径过滤、文件监控辅助）。
 
 #include "auditforwarder/agent.h"
 #include <string>
@@ -7,7 +7,7 @@
 
 namespace af::collector {
 
-// Filter a candidate path against include/exclude glob patterns.
+// 根据包含/排除 glob 模式过滤候选路径。
 class PathFilter {
 public:
     void include(const std::vector<std::string>& patterns);
@@ -20,19 +20,19 @@ private:
     std::vector<std::string> excludes_;
 };
 
-// Watch a set of paths/dirs for file system events.
+// 监控一组路径/目录的文件系统事件。
 class FileWatchSource {
 public:
     virtual ~FileWatchSource() = default;
     virtual Result<void> open(const std::vector<std::string>& paths) = 0;
     virtual void         close() = 0;
-    // Poll events, returns number of events emitted via the callback
+    // 轮询事件，返回通过回调发出的事件数量
     virtual int          poll(std::function<bool(const std::string& path,
                                                  const std::string& op,
                                                  u64 timestamp_us)> cb) = 0;
 };
 
-// Construct a platform-specific source.
+// 构建平台特定的监控源。
 std::unique_ptr<FileWatchSource> make_file_watch_source();
 
 }  // namespace af::collector
