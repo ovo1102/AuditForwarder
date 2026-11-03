@@ -263,6 +263,7 @@ std::string default_config_json() {
   "score_high": 80,
   "score_mid": 40,
   "alert_dedup_seconds": 300,
+  "chain_dedup_seconds": 300,
   "chain_mode": true,
   "chain_span_minutes": 10080,
   "chain_max_events": 200,
@@ -406,6 +407,7 @@ std::string config_to_json(const EngineConfig& c) {
       << "  \"score_high\": " << c.score_high << ",\n"
       << "  \"score_mid\": " << c.score_mid << ",\n"
       << "  \"alert_dedup_seconds\": " << c.alert_dedup_seconds << ",\n"
+      << "  \"chain_dedup_seconds\": " << c.chain_dedup_seconds << ",\n"
       << "  \"chain_mode\": " << (c.chain_mode ? "true" : "false") << ",\n"
       << "  \"chain_span_minutes\": " << (c.chain_span_ms / 60000) << ",\n"
       << "  \"chain_max_events\": " << c.chain_max_events << ",\n"
@@ -484,6 +486,10 @@ EngineConfig config_from_json(const std::string& j) {
     c.score_high = std::min(std::max(static_cast<int>(logpolicy::json_size_field(j, "score_high", 80)), 50), 100);
     c.score_mid = std::min(std::max(static_cast<int>(logpolicy::json_size_field(j, "score_mid", 40)), 10), c.score_high - 1);
     c.alert_dedup_seconds = static_cast<u64>(logpolicy::json_size_field(j, "alert_dedup_seconds", 300));
+    // 链式指纹降噪：缺省沿用 alert_dedup_seconds，上限 1 小时（与旧的固定行为一致）
+    c.chain_dedup_seconds = static_cast<u64>(
+        logpolicy::json_size_field(j, "chain_dedup_seconds", c.alert_dedup_seconds));
+    c.chain_dedup_seconds = std::min<u64>(std::max<u64>(c.chain_dedup_seconds, 10), 3600);
     // ---- 链式滑动匹配（不再按固定窗口切分事件集）----
     c.chain_mode = json_bool_field(j, "chain_mode", true);
     // chain_span_minutes = 0 表示不限跨度（只受 chain_max_events 容量约束）
@@ -1501,8 +1507,9 @@ void Engine::prune_chain_locked() {
     // 降噪表容量保护：清理已经出了降噪窗口的指纹
     if (last_chain_alert_ms_.size() > 4096) {
         const u64 now_ms_v = now_ms();
+        const u64 dedup_ms = cfg_.chain_dedup_seconds * 1000ull;
         for (auto it = last_chain_alert_ms_.begin(); it != last_chain_alert_ms_.end();) {
-            if (now_ms_v >= it->second + 3600000ull) it = last_chain_alert_ms_.erase(it);
+            if (now_ms_v >= it->second + dedup_ms) it = last_chain_alert_ms_.erase(it);
             else ++it;
         }
     }
@@ -1867,10 +1874,11 @@ void Engine::evaluate_locked(const AggSet& set, bool update_profile, bool eager)
     }
 
     // 告警降噪：相同聚合 key 在降噪窗口内只告警一次
-    // 链式集合的 key 会随"证据链增长"重建，用更长的降噪窗口，避免同一条链
-    // 每来一条新事件就被重复落库（真正的新合谋会形成新指纹，不受影响）。
+    // 链式集合的 key 会随"证据链增长"重建，用独立的 chain_dedup_seconds 控制，
+    // 避免同一条链每来一条新事件都被重复落库，同时不会把 1 小时内的重跑场景
+    // 当成"同一条链"而抑制掉（旧实现固定取 max(alert_dedup, 3600)）。
     u64 dedup_secs = cfg_.alert_dedup_seconds;
-    if (set.window_kind == "chain") dedup_secs = std::max<u64>(dedup_secs, 3600);
+    if (set.window_kind == "chain") dedup_secs = cfg_.chain_dedup_seconds;
     u64 last = 0;
     auto it = last_alert_epoch_.find(set.aggregate_key);
     if (it != last_alert_epoch_.end()) last = it->second;

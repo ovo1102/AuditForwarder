@@ -1,0 +1,125 @@
+# AuditForwarder - 合谋实验专用客户端配置（第三台机器 M3 / 操作员 admin3）
+#
+# 与 client_lab_peer.yaml 的区别，都是"三台机器同时上报"能成立的前提：
+#   1. agent.id / host_id 改成 lab-pc3，服务端证据链才能区分是哪台机器
+#   2. 独立 data_dir (data/client3)，批次文件不会和别的实例抢文件
+#   3. 代理端口 8888（本机只跑一个实例，用默认端口，方便 open_lan.bat 直接打开）
+#   4. 服务端地址指向监管端（26.17.173.34）
+#
+# 用法：build\auditforwarder-client.exe -c config/client_lab_peer3.yaml -d data/client3
+# 必须在仓库根目录运行，否则日志路径与数据目录解析不到。
+
+agent:
+  id: "lab-pc3"
+  data_dir: data/client3
+  config_path: config/client_lab_peer3.yaml
+
+# 默认操作员：仅当请求里解析不出身份时兜底（例如 HTTPS 隧道、非浏览器脚本）
+operator:
+  id: "admin3"
+  name: "admin3"
+
+log:
+  level: info
+  file: data/client3/client.log
+  max_bytes: 52428800
+  max_backups: 5
+
+chain:
+  batch_size: 1                       # 实验要求"产生即转发"，不做攒批
+  sign_batches: false
+  auto_persist: true
+  hmac_key: ""
+
+transport:
+  servers:
+    - "http://26.17.173.34:8443/ingest?agent=lab-pc3"
+  mode: realtime
+  interval_sec: 1
+  compress: false
+  encrypt_payload: false
+  auth_token: ""
+  verify_tls: false
+
+remote:
+  enabled: true
+  servers:
+    - "http://26.17.173.34:8443"
+  host_id: "lab-pc3"                  # 必须和 lab-pc / lab-pc2 不同
+  heartbeat_interval_sec: 5
+  command_poll_interval_sec: 3
+  audit_summary_interval_sec: 2
+  production_mode: false
+  require_tls: false
+  crl_check: false
+  enrollment_key: ""
+  allowed_commands:
+    - collect_status
+    - echo
+    - set_collector
+    - set_collectors
+    - load_rules
+
+detector:
+  rules_path: config/rules.yaml
+  enable_behavior_baseline: true
+
+self_protect:
+  enabled: false
+
+manager:
+  enabled: false
+  auth_token: ""
+
+collectors:
+  enabled: true
+  filter:
+    file:
+      paths: []
+      include: []
+      exclude: []
+      coalesce_ms: 0
+    process:
+      exclude_images: ["*"]        # 只用 http_proxy，进程事件是噪音且会堵上报队列
+      emit_exit: false
+    network:
+      include_loopback: true
+      only_established: true
+      emit_only_new: true
+      poll_ms: 30000                # 网络快照降到 30 秒一次，减少无意义事件
+      exclude_remote_ports: []
+    etw:
+      event_ids: [4624, 4625, 4688]
+      logon_types: [2, 10, 11]
+      skip_machine_accounts: true
+      skip_system: true
+      extract_command_line: true
+  http_proxy:
+    enabled: true
+    bind: 127.0.0.1
+    listen_port: 8888
+    capture_body: true                # exec 类接口的动作名在请求体里，必须留 body
+    # 必须写成行内数组：本项目的 YAML 解析器不认块序列（每行一个 "- 值"），
+    # 写成块序列会被静默丢成空列表，而空列表的含义是"采集所有主机"。
+    # 这里必须包含监管端 IP，否则访问 http://26.17.173.34:18080 的请求会被整条丢弃。
+    # 注意：host_allowed() 会丢掉端口，只比主机名，写不写 :18080 都一样。
+    target_hosts: ["127.0.0.1", "localhost", "26.17.173.34"]
+    # 操作员身份提取：决定"这条日志是谁做的"
+    identity:
+      header: "x-af-operator"         # 1. 显式身份头（curl / 脚本直接声明）
+      cookie: "af_operator"           # 2. 登录后下发的身份 Cookie
+      from_bearer: true               # 3. 解 Authorization: Bearer <token> 里的 username
+      from_body: true                 # 4. 登录请求体里的 username
+
+privilege_detect:
+  enabled: true
+
+test_injection:
+  enabled: false
+  interval_ms: 1000
+
+processors:
+  - type: enricher
+  - type: pii_masker
+  - type: deduper
+    window_ms: 50

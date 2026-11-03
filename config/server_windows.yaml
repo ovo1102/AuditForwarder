@@ -43,7 +43,7 @@ manager:
   # 请替换为你自己的强密码哈希，生成方法（PowerShell）：
   #   $b=[Text.Encoding]::UTF8.GetBytes("你的密码"); -join ([Security.Cryptography.SHA256]::Create().ComputeHash($b) | % { $_.ToString("x2") })
   # 明文密码 = admin123（仅用于本地开发调试，生产部署请改为强密码的 SHA256）
-  login_password_sha256: "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"
+  # login_password_sha256 留空 = 使用默认 admin/admin123；已删除硬编码 hash 避免兼容问题
   status_timeout_seconds: 30       # 心跳超过此值判定下线（客户端默认 5s 心跳，留 6 次窗口）
   use_tls: false
   require_client_cert: false

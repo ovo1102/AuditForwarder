@@ -51,6 +51,10 @@ struct EngineConfig {
     int     score_high         { 80 };               // 高风险阈值
     int     score_mid          { 40 };               // 中风险阈值
     u64     alert_dedup_seconds{ 300 };              // 同一聚合 key 告警降噪窗口
+    // 链式集合的指纹降噪窗口：原实现固定取 max(alert_dedup_seconds, 3600)，
+    // 结果是同一场景在 1 小时内重跑会被当成"同一条链"静默抑制，实验/复核时
+    // 看不到新告警。改为独立可配（默认与 alert_dedup_seconds 一致）。
+    u64     chain_dedup_seconds{ 300 };
     // ---- 链式滑动匹配（低频慢速合谋）----
     // 固定窗口（tumbling window）以 :00/:15/:30/:45 对齐切分，攻击者只要把三步
     // 跨过窗口边界（甚至隔几小时、隔天）就完全落进不同集合，固定窗口永远拼不出链。
