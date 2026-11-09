@@ -483,7 +483,7 @@ void RemoteAgentClient::audit_loop() {
         }
         // 等待下一个检查点；高优先级批次入队会 notify 即时唤醒
         std::unique_lock<std::mutex> lk(mtx_);
-        audit_cv_.wait_for(lk, std::chrono::milliseconds(200), [this] {
+        audit_cv_.wait_for(lk, std::chrono::milliseconds(100), [this] {
             return !running_.load() || !hi_audit_queue_.empty();
         });
     }
@@ -610,7 +610,11 @@ void RemoteAgentClient::send_audit_summaries(bool high_only) {
     //   心跳一直 ok、chain 通道的批次一直在 upload status=200，
     //   但 operation-logs 一条都到不了服务端，合谋检测自然是空的。
     // 分批发送才能把积压慢慢消化掉。
-    constexpr std::size_t kMaxPerSend = 40;
+    //
+    // 实验环境把单次上限从 40 提到 120：http_proxy 会把浏览器的轮询请求也采成
+    // 操作日志，队列很容易堆到几百条，新产生的三条合谋动作只能排在队尾，
+    // 表现为"操作完要等十几秒才出告警"。加大单次批量能让队列更快被清空。
+    constexpr std::size_t kMaxPerSend = 120;
     std::vector<chain::EventBatch> pending;
     auto take = [&pending](std::vector<chain::EventBatch>& q, std::size_t want) {
         std::size_t n = want < q.size() ? want : q.size();
@@ -1009,13 +1013,32 @@ RemoteAgentClient::HttpResponse RemoteAgentClient::http_request(const std::strin
         return out;
     }
 
+    // 读响应：解析 Content-Length，读够响应体就停。
+    // 不能等 EOF：服务端若保持 keep-alive，recv/SSL_read 会一直阻塞，
+    // audit_loop 线程整个卡死（现象：只有第一条 audit-summaries 能发出，
+    // 之后所有 operation-logs 都堆在队列里，服务端收不到任何事件）。
     std::string response;
     char buf[4096];
     int n = 0;
+    std::size_t need = 0;  // 响应总长度（含头）；0=暂未知
     while (true) {
         n = ssl ? SSL_read(ssl, buf, sizeof(buf)) : recv(fd, buf, sizeof(buf), 0);
         if (n <= 0) break;
         response.append(buf, n);
+        if (need == 0) {
+            auto hdr_end = response.find("\r\n\r\n");
+            if (hdr_end != std::string::npos) {
+                std::string heads = response.substr(0, hdr_end);
+                std::size_t cl_pos = heads.find("Content-Length:");
+                if (cl_pos == std::string::npos) cl_pos = heads.find("content-length:");
+                if (cl_pos != std::string::npos) {
+                    try {
+                        need = hdr_end + 4 + static_cast<std::size_t>(std::stoul(heads.substr(cl_pos + 15)));
+                    } catch (...) { need = 0; }
+                }
+            }
+        }
+        if (need != 0 && response.size() >= need) break;
     }
     if (ssl) {
         SSL_shutdown(ssl);

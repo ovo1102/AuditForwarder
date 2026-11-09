@@ -105,6 +105,7 @@ Result<void> Agent::init(const AgentConfig& cfg) {
             cfg_.chain_signing_key = c.get_string("chain.signing_key", cfg_.chain_signing_key);
             cfg_.chain_hmac_key = c.get_string("chain.hmac_key", cfg_.chain_hmac_key);
             cfg_.chain_super_batch_k = static_cast<std::size_t>(c.get_int("chain.super_batch_k", static_cast<long long>(cfg_.chain_super_batch_k)));
+            cfg_.chain_auto_persist = c.get_bool("chain.auto_persist", cfg_.chain_auto_persist);
             cfg_.transport_mode = c.get_string("transport.mode", cfg_.transport_mode);
             cfg_.transport_interval_sec = static_cast<int>(c.get_int("transport.interval_sec", cfg_.transport_interval_sec));
             cfg_.transport_max_backoff_sec = static_cast<int>(c.get_int("transport.max_backoff_sec", cfg_.transport_max_backoff_sec));
@@ -261,7 +262,7 @@ Result<void> Agent::init(const AgentConfig& cfg) {
     chain::ChainConfig cc;
     cc.data_dir       = cfg_.data_dir;
     cc.batch_size     = cfg_.chain_batch_size;
-    cc.auto_persist   = true;
+    cc.auto_persist   = cfg_.chain_auto_persist;
     cc.super_batch_k  = cfg_.chain_super_batch_k;
     chain_ = std::make_unique<chain::Chain>(cc);
     if (!cfg_.chain_signing_key.empty()) {

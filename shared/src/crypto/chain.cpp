@@ -155,7 +155,15 @@ Result<EventBatch> Chain::flush() {
     AF_LOG_INFO("chain: flushed batch id=" << b.id << " events=" << b.events.size()
                   << " merkle=" << b.merkle_root.substr(0, 16) << "...");
     if (batch_cb_) {
-        try { batch_cb_(b); } catch (...) {}
+        // 注意：这里不能静默吞异常。回调负责把批次交给 transport / remote_client，
+        // 一旦抛异常，这批事件就永远丢了（表现为"客户端采集正常但服务端收不到"）。
+        try { batch_cb_(b); }
+        catch (const std::exception& e) {
+            AF_LOG_ERROR("chain: batch callback threw: " << e.what());
+        }
+        catch (...) {
+            AF_LOG_ERROR("chain: batch callback threw unknown exception");
+        }
     }
     return b;
 }

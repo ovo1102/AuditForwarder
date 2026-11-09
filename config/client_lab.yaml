@@ -51,7 +51,7 @@ remote:
   host_id: "lab-pc"
   heartbeat_interval_sec: 5
   command_poll_interval_sec: 3
-  audit_summary_interval_sec: 2
+  audit_summary_interval_sec: 1     # 实验环境压到 1 秒：操作日志越快进服务端，合谋告警越快出
   production_mode: false
   require_tls: false
   crl_check: false

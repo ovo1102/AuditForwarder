@@ -28,7 +28,10 @@ log:
 chain:
   batch_size: 1                       # 实验要求"产生即转发"，不做攒批
   sign_batches: false
-  auto_persist: true
+  # 实验机必须关掉落盘：落盘会写 data/client3/batches/*.json，
+  # file_win 采集器采到这些写入后又会触发新的批次，形成自激回路，
+  # 真实业务事件会被淹没在队列里（合谋告警要等十几秒甚至不出）。
+  auto_persist: false
   hmac_key: ""
 
 transport:
@@ -48,7 +51,7 @@ remote:
   host_id: "lab-pc3"                  # 必须和 lab-pc / lab-pc2 不同
   heartbeat_interval_sec: 5
   command_poll_interval_sec: 3
-  audit_summary_interval_sec: 2
+  audit_summary_interval_sec: 1     # 实验环境压到 1 秒：操作日志越快进服务端，合谋告警越快出
   production_mode: false
   require_tls: false
   crl_check: false

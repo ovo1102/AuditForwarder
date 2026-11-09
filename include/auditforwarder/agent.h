@@ -46,6 +46,12 @@ struct AgentConfig {
     std::string chain_signing_key;     // PEM 格式
     std::string chain_hmac_key;        // 备选方案
     std::size_t chain_super_batch_k { 8 };  // 超级批次容量（0=禁用）
+    // 是否把批次落盘到 <data_dir>/batches。
+    // 注意：开着它时，如果本机文件采集器也在采 data_dir，就会出现
+    //   采集事件 -> 落盘 -> 文件采集器采到这次写入 -> 再落盘
+    // 的自激回路（实测每秒数百批，真实业务事件会被淹没，表现为合谋告警迟迟不出）。
+    // 实验机应显式设为 false。
+    bool chain_auto_persist { true };
 
     // 传输配置
     std::vector<std::string> server_urls;

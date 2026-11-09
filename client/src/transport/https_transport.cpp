@@ -384,12 +384,30 @@ UploadResult HttpsTransport::do_upload(const std::string& url, const ByteBuffer&
         }
     }
 
-    // Read response
+    // Read response：先读到响应头，解析 Content-Length，读够响应体就停。
+    // 直接读到 EOF 是有坑的：服务端如果保持 keep-alive（不理会 Connection: close），
+    // BIO_read 会永久阻塞，worker 线程卡死，之后所有批次都发不出去。
+    // 现象非常迷惑人：采集器一切正常、本地日志也在 flush，但服务端一条事件都收不到。
     std::string response;
     char buf[4096];
     int n;
+    std::size_t need = 0;  // 响应总长度（含头）；0=暂未知
     while ((n = BIO_read(bio, buf, sizeof(buf))) > 0) {
         response.append(buf, n);
+        if (need == 0) {
+            auto hdr_end = response.find("\r\n\r\n");
+            if (hdr_end != std::string::npos) {
+                std::string heads = response.substr(0, hdr_end);
+                std::size_t cl_pos = heads.find("Content-Length:");
+                if (cl_pos == std::string::npos) cl_pos = heads.find("content-length:");
+                if (cl_pos != std::string::npos) {
+                    try {
+                        need = hdr_end + 4 + static_cast<std::size_t>(std::stoul(heads.substr(cl_pos + 15)));
+                    } catch (...) { need = 0; }
+                }
+            }
+        }
+        if (need != 0 && response.size() >= need) break;
     }
     BIO_free_all(bio);
     if (ctx) SSL_CTX_free(ctx);
