@@ -930,6 +930,15 @@ bool clean_event_json(const std::string& json, CleanEvent& out) {
         return false;
     }
 
+    // 实验模式白名单：只接收 http_proxy 采集器产出的业务 HTTP 日志。
+    // 其它采集器（file_win / network_win / registry_win / etw_win / command_win / process_win）
+    // 产生的大量本机噪音事件会被丢弃，避免淹没真正的合谋证据链。
+    // collector 为空时兼容设计文档原生格式 /agent/collusion/ingest 直连测试。
+    {
+        const std::string collector = logpolicy::json_string_field(json, "collector");
+        if (!collector.empty() && collector != "http_proxy") return false;
+    }
+
     out.raw = json.size() > kMaxRawEvidence ? json.substr(0, kMaxRawEvidence) : json;
     return true;
 }

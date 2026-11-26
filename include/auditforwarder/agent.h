@@ -104,6 +104,15 @@ struct AgentConfig {
     // 是否启动本机采集器。服务端单独运行时应关闭采集器，只保留管理接口。
     bool collectors_enabled { true };
 
+    // 各系统采集器独立开关（默认全部 true 保持向后兼容；实验环境可只开 http_proxy）。
+    // 注意：即使总开关 collectors_enabled=true，单个采集器 enabled=false 也会跳过。
+    bool collector_file_enabled     { true };   // file_win - 磁盘变更
+    bool collector_process_enabled  { true };   // process_win - 进程创建/退出
+    bool collector_network_enabled  { true };   // network_win - 本机连接快照
+    bool collector_command_enabled  { true };   // command_win - Shell 命令历史
+    bool collector_registry_enabled { true };   // registry_win - 注册表变更
+    bool collector_etw_enabled      { true };   // etw_win - Windows 安全事件
+
     // 本地 HTTP 代理行为采集（M5-3）：未配置时默认关闭，可被服务端远程开启。
     bool        http_proxy_enabled { false };
     std::string http_proxy_bind { "127.0.0.1" };

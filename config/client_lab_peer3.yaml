@@ -4,7 +4,7 @@
 #   1. agent.id / host_id 改成 lab-pc3，服务端证据链才能区分是哪台机器
 #   2. 独立 data_dir (data/client3)，批次文件不会和别的实例抢文件
 #   3. 代理端口 8888（本机只跑一个实例，用默认端口，方便 open_lan.bat 直接打开）
-#   4. 服务端地址指向监管端（26.17.173.34）
+#   4. 服务端地址指向监管端（192.168.43.49）
 #
 # 用法：build\auditforwarder-client.exe -c config/client_lab_peer3.yaml -d data/client3
 # 必须在仓库根目录运行，否则日志路径与数据目录解析不到。
@@ -36,7 +36,7 @@ chain:
 
 transport:
   servers:
-    - "http://26.17.173.34:8443/ingest?agent=lab-pc3"
+    - "http://192.168.43.49:8443/ingest?agent=lab-pc3"
   mode: realtime
   interval_sec: 1
   compress: false
@@ -47,7 +47,7 @@ transport:
 remote:
   enabled: true
   servers:
-    - "http://26.17.173.34:8443"
+    - "http://192.168.43.49:8443"
   host_id: "lab-pc3"                  # 必须和 lab-pc / lab-pc2 不同
   heartbeat_interval_sec: 5
   command_poll_interval_sec: 3
@@ -76,9 +76,27 @@ manager:
 
 collectors:
   enabled: true
+  # 实验场景只采集目标系统的 HTTP 代理日志，其余全部关闭。
+  # 本机 file/registry/network/etw/process/command 采集器会产生大量噪音事件，
+  # 淹没真正的业务操作日志，导致上报队列阻塞、检测延迟甚至漏检。
+  # 注意：YAML 解析器不认行内 map { enabled: false }，必须写成块序列。
+  file:
+    enabled: false
+  process:
+    enabled: false
+  network:
+    enabled: false
+  command:
+    enabled: false
+  registry:
+    enabled: false
+  etw:
+    enabled: false
   filter:
     file:
-      paths: []
+      # 设为不存在目录，file_win 启动即报错退出，不再产生全盘文件噪音。
+      # 注意：不能留空 —— 空 paths 会回退为平台默认目录（全盘）。
+      paths: ["C:\\Windows\\Temp\\audit-disabled"]
       include: []
       exclude: []
       coalesce_ms: 0
@@ -104,9 +122,9 @@ collectors:
     capture_body: true                # exec 类接口的动作名在请求体里，必须留 body
     # 必须写成行内数组：本项目的 YAML 解析器不认块序列（每行一个 "- 值"），
     # 写成块序列会被静默丢成空列表，而空列表的含义是"采集所有主机"。
-    # 这里必须包含监管端 IP，否则访问 http://26.17.173.34:18080 的请求会被整条丢弃。
+    # 这里必须包含监管端 IP，否则访问 http://192.168.43.49:18080 的请求会被整条丢弃。
     # 注意：host_allowed() 会丢掉端口，只比主机名，写不写 :18080 都一样。
-    target_hosts: ["127.0.0.1", "localhost", "26.17.173.34"]
+    target_hosts: ["127.0.0.1", "localhost", "192.168.43.49"]
     # 操作员身份提取：决定"这条日志是谁做的"
     identity:
       header: "x-af-operator"         # 1. 显式身份头（curl / 脚本直接声明）

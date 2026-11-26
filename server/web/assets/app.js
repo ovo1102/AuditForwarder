@@ -2364,7 +2364,8 @@ function init() {
     showLogin();
     if (els.loginUsername) els.loginUsername.focus();
   }
-  window.setInterval(refreshLiveData, 30000);
+  // 实验模式：5 秒一次，合谋告警应 10 秒内出现在页面上。
+  window.setInterval(refreshLiveData, 5000);
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden && state.token) refreshLiveData();
   });

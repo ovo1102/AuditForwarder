@@ -144,6 +144,13 @@ Result<void> Agent::init(const AgentConfig& cfg) {
             cfg_.self_protect_enabled = c.get_bool("self_protect.enabled", cfg_.self_protect_enabled);
             cfg_.rules_path = c.get_string("detector.rules_path", cfg_.rules_path);
             cfg_.collectors_enabled = c.get_bool("collectors.enabled", cfg_.collectors_enabled);
+            // 各系统采集器独立开关（默认 true，向后兼容）
+            cfg_.collector_file_enabled     = c.get_bool("collectors.file.enabled",     cfg_.collector_file_enabled);
+            cfg_.collector_process_enabled  = c.get_bool("collectors.process.enabled",  cfg_.collector_process_enabled);
+            cfg_.collector_network_enabled  = c.get_bool("collectors.network.enabled",  cfg_.collector_network_enabled);
+            cfg_.collector_command_enabled  = c.get_bool("collectors.command.enabled",  cfg_.collector_command_enabled);
+            cfg_.collector_registry_enabled = c.get_bool("collectors.registry.enabled", cfg_.collector_registry_enabled);
+            cfg_.collector_etw_enabled      = c.get_bool("collectors.etw.enabled",      cfg_.collector_etw_enabled);
             // M5-3 本地 HTTP 代理采集配置（未配置时默认关闭）
             cfg_.http_proxy_enabled = c.get_bool("collectors.http_proxy.enabled", cfg_.http_proxy_enabled);
             cfg_.http_proxy_bind = c.get_string("collectors.http_proxy.bind", cfg_.http_proxy_bind);
@@ -487,10 +494,19 @@ Result<void> Agent::start() {
     }
     if (cfg_.collectors_enabled) {
         for (auto& c : collectors_) {
-            if (c->name() == logmeta::collector::kHttpProxy && !cfg_.http_proxy_enabled) {
-                AF_LOG_INFO("collector: http_proxy 未配置启用（默认关闭，可由服务端远程开启）");
-                continue;
-            }
+            const std::string& nm = c->name();
+            if (nm == logmeta::collector::kHttpProxy) {
+                if (!cfg_.http_proxy_enabled) {
+                    AF_LOG_INFO("collector: http_proxy 未配置启用（默认关闭，可由服务端远程开启）");
+                    continue;
+                }
+            } else if (nm == "file_win"        && !cfg_.collector_file_enabled)     { continue; }
+              else if (nm == "process_win"    && !cfg_.collector_process_enabled)  { continue; }
+              else if (nm == "network_win"    && !cfg_.collector_network_enabled)  { continue; }
+              else if (nm == "command_win"    && !cfg_.collector_command_enabled)  { continue; }
+              else if (nm == "registry_win"   && !cfg_.collector_registry_enabled) { continue; }
+              else if (nm == "etw_win"        && !cfg_.collector_etw_enabled)      { continue; }
+
             auto r = c->start(*this);
             if (r.is_err()) AF_LOG_ERROR("collector: " << c->name() << " start failed: " << r.error().message());
             else AF_LOG_INFO("collector: " << c->name() << " started");
